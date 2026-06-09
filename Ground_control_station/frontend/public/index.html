@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drone GCS</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+  <!-- ── Top Bar ─────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo">⬡ DRONE GCS</span>
+    </div>
+    <div class="topbar-center">
+      <span class="conn-indicator" id="conn-dot"></span>
+      <span id="conn-label" class="conn-label">DISCONNECTED</span>
+      <span class="sep">·</span>
+      <span class="conn-indicator" id="jetson-dot"></span>
+      <span id="jetson-label" class="conn-label dim">JETSON</span>
+      <span class="sep">·</span>
+      <span id="flight-state-badge" class="mode-badge">IDLE</span>
+      <span class="sep">·</span>
+      <span id="vio-badge" class="mode-badge">VIO: --</span>
+
+    </div>
+    <div class="topbar-right">
+      <button class="btn-start" id="start-btn" onclick="startMission()">▶ START</button>
+      <button class="btn-kill"  id="kill-btn"  onclick="killMission()">✕ KILL</button>
+      <button class="btn-disarm" id="disarm-btn" onclick="disarmDrone()">⚡ DISARM</button>
+      <span class="sep">|</span>
+      <input  id="ws-url" class="ws-input" value="ws://127.0.0.1:3000" placeholder="ws://IP:3000" />
+      <button class="btn-connect" id="connect-btn" onclick="toggleConnect()">CONNECT</button>
+    </div>
+  </header>
+
+  <!-- ── Main Grid ───────────────────────────────────── -->
+  <main class="dashboard">
+
+    <!-- ══ Col 1: Attitude (compact) + Position + Velocity + Mini Cam (flex) ══ -->
+    <section class="col col-left">
+
+      <!-- Attitude — compact -->
+      <div class="panel panel-attitude">
+        <div class="panel-header">
+          <span class="panel-title">ATTITUDE</span>
+          <span class="panel-sub" id="att-mode-sub">Roll · Pitch · Yaw</span>
+        </div>
+        <div class="ahi-wrap">
+          <canvas id="ahi-canvas" width="150" height="150"></canvas>
+          <canvas id="compass-canvas" width="150" height="42" class="compass-strip"></canvas>
+        </div>
+        <!-- Altitude visible right here, always on screen -->
+        <div class="alt-big-wrap" style="margin:4px 0 0;">
+          <span class="stat-lbl" style="margin-right:6px;font-size:10px;">ALT</span>
+          <span class="alt-big-val mono" id="val-alt-attitude" style="font-size:28px;">0.00</span>
+          <span class="alt-big-unit">m</span>
+        </div>
+        <div class="triple-stat">
+          <div class="stat-cell">
+            <span class="stat-lbl">ROLL</span>
+            <span class="stat-val" id="val-roll">0.0°</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-lbl">PITCH</span>
+            <span class="stat-val" id="val-pitch">0.0°</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-lbl">YAW</span>
+            <span class="stat-val" id="val-yaw">0.0°</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Position -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">POSITION</span>
+          <span class="panel-sub" id="gps-fix-label">GPS 3D FIX</span>
+        </div>
+        <div class="triple-stat">
+          <div class="stat-cell">
+            <span class="stat-lbl">LAT</span>
+            <span class="stat-val mono" id="val-lat">0.000000</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-lbl">LON</span>
+            <span class="stat-val mono" id="val-lon">0.000000</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-lbl">ALT LiDAR (m)</span>
+            <span class="stat-val mono" id="val-alt">0.0</span>
+          </div>
+        </div>
+        <!-- Big Altitude Display -->
+        <div class="alt-big-wrap">
+          <span class="alt-big-val mono" id="val-alt-big">0.00</span>
+          <span class="alt-big-unit">m</span>
+        </div>
+        <div class="alt-bar-bg">
+          <div class="alt-bar-fill" id="alt-bar-fill"></div>
+        </div>
+        <div class="double-stat" style="margin-top:4px">
+          <div class="stat-cell">
+            <span class="stat-lbl">MODE</span>
+            <span class="stat-val mono" id="flight-mode" style="font-size:11px;color:#93c5fd;">STABILIZE</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-lbl">STATUS</span>
+            <span class="stat-val mono" id="arm-badge" style="font-size:11px;color:#fca5a5;">DISARMED</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Velocity -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">VELOCITY</span>
+        </div>
+        <div class="vel-block">
+          <div class="vel-row">
+            <span class="vel-lbl">VERT</span>
+            <div class="vel-track"><div class="vel-fill fill-blue" id="vv-fill"></div></div>
+            <span class="vel-num mono" id="val-vv">0.0 m/s</span>
+          </div>
+          <div class="vel-row">
+            <span class="vel-lbl">HORIZ</span>
+            <div class="vel-track"><div class="vel-fill fill-green" id="vh-fill"></div></div>
+            <span class="vel-num mono" id="val-vh">0.0 m/s</span>
+          </div>
+          <div class="vel-row">
+            <span class="vel-lbl">Vx</span>
+            <div class="vel-track"><div class="vel-fill fill-teal" id="vx-fill"></div></div>
+            <span class="vel-num mono" id="val-vx">0.0 m/s</span>
+          </div>
+          <div class="vel-row">
+            <span class="vel-lbl">Vy</span>
+            <div class="vel-track"><div class="vel-fill fill-teal" id="vy-fill"></div></div>
+            <span class="vel-num mono" id="val-vy">0.0 m/s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Camera Feed — fills remaining left-col space -->
+      <div class="panel panel-minicam">
+        <div class="panel-header">
+          <span class="panel-title">CAMERA FEED</span>
+          <div class="cam-controls">
+            <button class="btn-tiny" onclick="toggleCamMode()">⇄ SIM/LIVE</button>
+            <input id="cam-url-input" class="cam-url-input" placeholder="http://IP:PORT/" value="" />
+          </div>
+        </div>
+        <div class="minicam-frame" id="cam-frame">
+          <canvas id="sim-cam" width="400" height="225"></canvas>
+          <img id="live-cam" style="display:none;" alt="live feed" />
+          <div class="cam-hud">
+            <span class="rec-dot">● REC</span>
+            <span id="cam-fps-label">-- fps</span>
+          </div>
+          <div class="cam-crosshair">
+            <svg width="36" height="36" viewBox="0 0 60 60">
+              <circle cx="30" cy="30" r="10" fill="none" stroke="#ffaa00" stroke-width="1.5"/>
+              <line x1="0" y1="30" x2="18" y2="30" stroke="#ffaa00" stroke-width="1.5"/>
+              <line x1="42" y1="30" x2="60" y2="30" stroke="#ffaa00" stroke-width="1.5"/>
+              <line x1="30" y1="0" x2="30" y2="18" stroke="#ffaa00" stroke-width="1.5"/>
+              <line x1="30" y1="42" x2="30" y2="60" stroke="#ffaa00" stroke-width="1.5"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══ Col 2: System Log (16:9, vertical scroll) + Flight Map (fills rest) ══ -->
+    <section class="col col-mid">
+
+      <!-- System Log & Failures — 16:9 aspect, vertical scroll, single-line entries -->
+      <div class="panel panel-syslog-mid">
+        <div class="panel-header">
+          <span class="panel-title">SYSTEM LOG &amp; FAILURES</span>
+          <button class="btn-tiny" onclick="clearSysLog()">CLEAR</button>
+        </div>
+        <div class="log-scroll" id="syslog-scroll"></div>
+      </div>
+
+      <!-- Flight Map — takes remaining height -->
+      <div class="panel panel-map">
+        <div class="panel-header">
+          <span class="panel-title">FLIGHT MAP</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn-tiny" onclick="centerMap()">CENTER</button>
+            <button class="btn-tiny" onclick="clearPath()">CLEAR PATH</button>
+          </div>
+        </div>
+        <div id="map"></div>
+      </div>
+
+    </section>
+
+    <!-- ══ Col 3: Battery (compact) + Camera Logs (always visible, flex) ══ -->
+    <section class="col col-right">
+
+      <!-- Battery -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">BATTERY</span>
+          <span id="batt-status-label" class="panel-sub ok-text">NOMINAL</span>
+        </div>
+        <div class="batt-main">
+          <span class="batt-v mono" id="val-batt-v">--.-- V</span>
+        </div>
+        <div class="batt-bar-bg">
+          <div class="batt-bar-fill" id="batt-fill"></div>
+        </div>
+        <div class="double-stat" style="margin-top:8px">
+          <div class="stat-cell">
+            <span class="stat-lbl">CURRENT</span>
+            <span class="stat-val mono" id="val-batt-amp">0.0 A</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-lbl">USED</span>
+            <span class="stat-val mono" id="val-batt-mah">0 mAh</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Camera Logs — always expanded, fills remaining height -->
+      <div class="panel panel-archive" id="archive-panel">
+        <div class="panel-header">
+          <span class="panel-title">CAMERA LOGS</span>
+          <span class="cam-log-count" id="archive-count">0 records</span>
+        </div>
+        <!-- Table always visible — vertical scroll when rows grow -->
+        <div class="archive-table-wrap" id="archive-table-wrap">
+          <table class="archive-table" id="archive-table">
+            <thead>
+              <tr>
+                <th>DATE</th>
+                <th>TIME</th>
+                <th>IMG</th>
+                <th>LOCATION</th>
+                <th>VEL m/s</th>
+              </tr>
+            </thead>
+            <tbody id="archive-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- ── Scripts ─────────────────────────────────────── -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="js/ahi.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/chart-vel.js"></script>
+  <script src="js/simcam.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

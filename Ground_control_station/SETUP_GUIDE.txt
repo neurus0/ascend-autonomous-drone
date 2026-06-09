@@ -1,0 +1,106 @@
+================================================================================
+  IRoC-U 2026 — QUICK SETUP REFERENCE
+  ASCEND  Autonomous Drone Flight Stack
+================================================================================
+
+
+  LAPTOP — LAUNCH GCS
+  ─────────────────────
+  cd drone-GCS\backend
+  npm install              (only first time)
+  node server.js           (real mode — needs Jetson running)
+  node server.js --simulate   (test mode — no drone needed)
+
+  Then open browser: http://127.0.0.1:3000
+
+
+  JETSON — LAUNCH FLIGHT STACK
+  ──────────────────────────────
+  roslaunch thl_drone unified_launch.launch fcu_url:=/dev/ttyACM0:115200
+
+
+  DEPLOY FILES TO JETSON (from laptop)
+  ──────────────────────────────────────
+  scp jetson_unified/*.py jetson@192.168.70.108:~/catkin_ws/src/thl_drone/scripts/
+  scp jetson_unified/*.launch jetson@192.168.70.108:~/catkin_ws/src/thl_drone/launch/
+  ssh jetson@192.168.70.108 "chmod +x ~/catkin_ws/src/thl_drone/scripts/*.py"
+
+
+  NETWORK
+  ────────
+  Jetson:  192.168.70.108   (TCP server on port 5005)
+  Laptop:  192.168.70.198   (TCP client + GCS on port 3000)
+
+
+  CONFIG FILE: drone-GCS/backend/.env
+  ─────────────────────────────────────
+  JETSON_IP=192.168.70.108
+  JETSON_TCP_PORT=5005
+  CAMERA_URL=http://192.168.70.108:5000
+  SIMULATE=false
+
+
+================================================================================
+  FILES ON LAPTOP (drone-GCS/)
+================================================================================
+
+  backend/
+    server.js           Main server — TCP client to Jetson + WebSocket to browser
+    .env                Config: IPs, ports
+    simulator.js        Fake drone data for testing
+    mavparser.js        JSON telemetry mapper
+    logger.js           Logging utility
+    package.json        npm dependencies
+    logs/flight_log.xlsx  Auto-generated Excel flight log
+
+  frontend/public/
+    index.html          GUI page — all panels and buttons
+    css/style.css       Dark theme styling
+    js/app.js           Frontend logic — WebSocket, telemetry display, commands
+    js/ahi.js           Attitude horizon indicator
+    js/charts.js        Real-time charts
+    js/map.js           Flight map
+    js/simcam.js        Simulated camera
+
+
+================================================================================
+  FILES ON JETSON (catkin_ws/src/thl_drone/)
+================================================================================
+
+  scripts/
+    tcp_bridge.py       TCP server :5005 — telemetry + commands
+    throttle_hover.py   Flight controller — STABILIZE + RC override + LiDAR
+    kill.py             Graceful descent module
+    emergency_monitor.py Safety monitor
+    photo_capture.py    Camera capture + logging
+    data_transfer.py    Post-landing data upload to GCS
+    lidar_alt.py        TFMini-S LiDAR altitude
+    vio_nav.py          Optical flow VIO
+
+  launch/
+    unified_launch.launch  Single launch file for all 7 nodes
+
+
+================================================================================
+  WHAT LAUNCHES (ORDER)
+================================================================================
+
+  1. MAVROS           — Pixhawk FCU bridge
+  2. lidar_alt.py     — LiDAR altitude publisher
+  3. vio_nav.py       — VIO navigation (3s delay)
+  4. emergency_monitor.py — Safety (5s delay)
+  5. tcp_bridge.py    — TCP server (3s delay)
+  6. throttle_hover.py — Hover controller (8s delay)
+  7. data_transfer.py — Data upload (5s delay)
+
+
+================================================================================
+  EMERGENCY PROCEDURES
+================================================================================
+
+  ▶ KILL (red button)     → Gradual throttle descent, LiDAR ground detect
+  ⚡ DISARM (amber button) → IMMEDIATE motor cutoff (drone will DROP)
+  Battery pull             → Last resort
+
+
+================================================================================
