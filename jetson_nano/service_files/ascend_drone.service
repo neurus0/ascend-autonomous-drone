@@ -1,0 +1,16 @@
+[Unit]
+Description=ASCEND IRoC-U Drone Flight Stack
+After=network.target
+
+[Service]
+Type=simple
+User=nano
+Environment="ROS_MASTER_URI=http://localhost:11311"
+Environment="ROS_IP=192.168.70.215"
+ExecStartPre=/bin/bash -c 'source /opt/ros/melodic/setup.bash && source /home/nano/catkin_ws/devel/setup.bash && chmod 666 /dev/ttyACM0 && chmod 666 /dev/ttyUSB0'
+ExecStart=/bin/bash -c 'source /opt/ros/melodic/setup.bash && source /home/nano/catkin_ws/devel/setup.bash && roslaunch thl_drone unified_launch.launch'
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

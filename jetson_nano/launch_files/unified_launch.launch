@@ -1,0 +1,112 @@
+<!--
+  IRoC-U 2026 — Unified Flight Stack Launch File
+  =================================================
+  SINGLE COMMAND to start everything on Jetson Nano.
+
+  Launches (in order):
+    1. MAVROS        — ArduPilot FCU bridge (apm.launch)
+    2. lidar_alt.py  — TFMini-S LiDAR altitude (with respawn)
+    3. vio_nav.py    — VIO optical flow navigation (3s delay, respawn)
+    4. emergency_monitor.py — Safety monitor (5s delay)
+    5. tcp_bridge.py — TCP server for GCS communication (3s delay)
+    6. throttle_hover.py — Throttle-based hover controller (8s delay)
+    7. data_transfer.py — Post-landing data upload to GCS (5s delay)
+
+  Usage:
+    roslaunch thl_drone unified_launch.launch fcu_url:=/dev/ttyACM0:115200
+
+  Default UART:
+    roslaunch thl_drone unified_launch.launch
+-->
+
+<launch>
+
+  <!-- ── FCU connection arguments ── -->
+  <arg name="fcu_url"       default="/dev/ttyACM0:115200" />
+  <arg name="gcs_url"       default="" />
+  <arg name="tgt_system"    default="1" />
+  <arg name="tgt_component" default="1" />
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- 1. MAVROS — ArduPilot FCU Bridge (apm.launch, NOT px4)      -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <include file="$(find mavros)/launch/apm.launch">
+    <arg name="fcu_url"       value="$(arg fcu_url)" />
+    <arg name="gcs_url"       value="$(arg gcs_url)" />
+    <arg name="tgt_system"    value="$(arg tgt_system)" />
+    <arg name="tgt_component" value="$(arg tgt_component)" />
+  </include>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- 2. LiDAR Altitude Node (TFMini-S on /dev/ttyUSB0)           -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <node
+    name="lidar_alt_node"
+    type="lidar_alt.py"
+    pkg="thl_drone"
+    output="screen"
+    respawn="true"
+    respawn_delay="3"
+  />
+
+  <!-- VIO/camera node disabled — no camera for THL mission -->
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- 4. Emergency Safety Monitor                                   -->
+  <!--    5s delay — wait for sensors to start publishing            -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <node
+    name="emergency_monitor_node"
+    type="emergency_monitor.py"
+    pkg="thl_drone"
+    output="screen"
+    respawn="false"
+    launch-prefix="bash -c 'sleep 5; $0 $@' "
+  />
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- 5. TCP Bridge — GCS Communication Server                     -->
+  <!--    3s delay — wait for MAVROS topics                          -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <node
+    name="tcp_bridge_node"
+    type="tcp_bridge.py"
+    pkg="thl_drone"
+    output="screen"
+    respawn="true"
+    respawn_delay="5"
+    launch-prefix="bash -c 'sleep 3; $0 $@' "
+  />
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- 6. Throttle Hover Controller                                  -->
+  <!--    6s delay — wait for LiDAR + TCP bridge                     -->
+  <!--    Waits for START command from tcp_bridge before arming       -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <node
+    name="throttle_hover_node"
+    type="throttle_hover.py"
+    pkg="thl_drone"
+    output="screen"
+    respawn="false"
+    launch-prefix="bash -c 'sleep 6; $0 $@' "
+  />
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- 7. Data Transfer — Post-Landing Upload to GCS                -->
+  <!--    5s delay — stays idle until landing detected, then uploads -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <node
+    name="data_transfer_node"
+    type="data_transfer.py"
+    pkg="thl_drone"
+    output="screen"
+    respawn="false"
+    launch-prefix="bash -c 'sleep 5; $0 $@' "
+  >
+    <param name="gcs_ip"        value="192.168.70.198" />
+    <param name="gcs_http_port" value="3000" />
+    <param name="upload_delay"  value="5.0" />
+  </node>
+
+</launch>
