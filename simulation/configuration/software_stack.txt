@@ -1,0 +1,89 @@
+IRoC-U 2026 Autonomous Drone Simulation Environment
+===================================================
+
+Vehicle
+----------------
+Quadcopter
+
+Operating System
+----------------
+Ubuntu 24.04 LTS
+
+Flight Controller Software
+--------------------------
+PX4 Autopilot v1.15.4
+PX4 SITL (Software In The Loop)
+
+Simulation Environment
+----------------------
+Gazebo Harmonic
+gz-sim 8.10.0
+
+Ground Control Station
+----------------------
+QGroundControl
+
+ROS Framework
+-------------
+ROS 2 Jazzy Jalisco
+Micro XRCE-DDS
+px4_ros_com
+px4_msgs
+
+Custom ROS2 Packages
+--------------------
+optical_flow_node
+offboard_control.py
+sensor_combined_listener.launch.py
+
+Drone Models Used
+-----------------
+x500
+x500_base
+x500_depth
+
+Custom Environment
+------------------
+mars_terrain
+
+3D Modelling and Asset Tools
+----------------------------
+Blender
+MeshLab
+FreeCAD
+
+Simulation Assets
+-----------------
+SDF (Simulation Description Format)
+DAE (COLLADA Models)
+STL (Mesh Models)
+PNG Textures
+OBJ Terrain Models
+MTL Material Files
+
+Testing and Validation
+----------------------
+Autonomous Takeoff
+Hover Stability Testing
+Autonomous Landing
+Vehicle Odometry Monitoring
+Estimator Status Monitoring
+Sensor Data Monitoring
+
+Useful ROS2 Commands
+--------------------
+
+Vehicle Position:
+ros2 topic echo /fmu/out/vehicle_odometry | grep position -A 3
+
+Sensor Data:
+listener sensor_combined
+
+Estimator Status:
+listener estimator_status_flags
+
+Repository Purpose
+------------------
+Development and testing environment for autonomous drone control,
+simulation, sensor integration, offboard control, and qualification
+tasks for the ISRO Robotics Challenge (IRoC-U 2026).

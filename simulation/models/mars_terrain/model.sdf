@@ -1,0 +1,50 @@
+<?xml version="1.0" ?>
+<sdf version="1.9">
+  <model name="mars_terrain">
+    <static>true</static>
+
+    <link name="terrain_link">
+
+      <pose>0 0 0 1.5708 0 0</pose>
+
+      <!-- BASE TERRAIN (plain color) -->
+      <visual name="mars_surface">
+        <geometry>
+          <mesh>
+            <uri>model://mars_terrain/meshes/mars.obj</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+
+        <material>
+          <ambient>0.25 0.18 0.12 1</ambient>
+          <diffuse>0.65 0.45 0.30 1</diffuse>
+          <specular>0.05 0.05 0.05 1</specular>
+        </material>
+      </visual>
+
+      <!-- FEATURES (uses .mtl automatically) -->
+      <visual name="mars_features">
+        <geometry>
+          <mesh>
+            <uri>model://mars_terrain/meshes/all_features.obj</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <!-- NO <material> here — .mtl is used -->
+      </visual>
+
+      <!-- COLLISION (single simplified mesh) -->
+      <collision name="terrain_collision">
+        <geometry>
+          <mesh>
+            <uri>model://mars_terrain/meshes/mars.obj</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+      </collision>
+
+    </link>
+  </model>
+</sdf>
+

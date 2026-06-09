@@ -1,0 +1,16 @@
+{
+  "test_started": true,
+  "preflight_passed": true,
+  "armed": true,
+  "takeoff_success": true,
+  "hover_stable": true,
+  "vertical_drift": 0.08,
+  "horizontal_drift": 0.14,
+  "max_roll_dev": 1.7,
+  "max_pitch_dev": 1.9,
+  "oscillations_detected": false,
+  "optical_flow_healthy": false,
+  "test_passed": true,
+  "failure_reason": null,
+  "test_duration": 31.02
+}

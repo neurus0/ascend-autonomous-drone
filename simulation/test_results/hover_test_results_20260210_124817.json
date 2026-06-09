@@ -1,0 +1,16 @@
+{
+  "test_started": true,
+  "preflight_passed": false,
+  "armed": false,
+  "takeoff_success": false,
+  "hover_stable": false,
+  "vertical_drift": null,
+  "horizontal_drift": null,
+  "max_roll_dev": null,
+  "max_pitch_dev": null,
+  "oscillations_detected": false,
+  "optical_flow_healthy": false,
+  "test_passed": false,
+  "failure_reason": "Emergency: Sensors not available",
+  "test_duration": 31.03005027770996
+}
