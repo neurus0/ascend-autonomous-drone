@@ -3,7 +3,6 @@
 Tuned parameters for GPS-denied autonomous flight on ArduCopter.
 Set via Mission Planner or MAVProxy.
 
----
 
 ## Failsafe (Disabled for autonomous ops)
 
@@ -13,7 +12,6 @@ Set via Mission Planner or MAVProxy.
 | FS_GCS_ENABLE   | 0     | Disable GCS heartbeat failsafe      |
 | ARMING_CHECK    | 0     | Disable all pre-arm checks          |
 
----
 
 ## Flight Controller
 
@@ -21,7 +19,6 @@ Set via Mission Planner or MAVProxy.
 |-----------------|-------|-------------------------------------|
 | DISARM_DELAY    | 0     | Instant disarm after landing        |
 
----
 
 ## EKF / Navigation (GPS-Denied)
 
@@ -33,7 +30,6 @@ Set via Mission Planner or MAVProxy.
 | EK3_SRC1_VELXY  | 5     | Optical flow for XY velocity        |
 | EK3_SRC1_POSZ   | 1     | Barometer for Z (fallback)          |
 
----
 
 ## Throttle Controller (THL Mission)
 
@@ -45,7 +41,6 @@ Configured in `throttle_hover.py` — not Pixhawk params.
 | THROTTLE_INCREMENT    | 5     | PWM step per control loop       |
 | BASE_THROTTLE_PCT     | 0     | Start from zero throttle        |
 
----
 
 ## How to Apply
 

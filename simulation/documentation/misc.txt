@@ -1,8 +1,0 @@
-1. For seeing position 
-ros2 topic echo /fmu/out/vehicle_odometry | grep position -A 3
-
-2. sensors data
-listener sensor_combined
-
-3. Status data
-listener estimator_status_flags
