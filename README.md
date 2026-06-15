@@ -268,9 +268,7 @@ This repository contains the complete engineering documentation, software artifa
 
 For a detailed breakdown of engineering responsibilities, subsystem ownership, integration tasks, and technical contributions, refer to:
 
-```text
-project_explainer/MY_CONTRIBUTIONS.md
-```
+[project_explainer/MY_CONTRIBUTIONS.md](project_explainer/MY_CONTRIBUTIONS.md)
 
 
 # Disclaimer
